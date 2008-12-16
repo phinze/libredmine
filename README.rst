@@ -5,6 +5,8 @@ libredmine
 A python library and command line client for interfacing with the Redmine
 project management web application
 
+about
+==============================
 
 Very early stages now... mostly ideas like this::
 
@@ -23,3 +25,15 @@ Mostly, the plan for this project consists of two parts:
 
 ``rdm``
     a command-line client for interfacing with Redmine that leverages the python library
+
+TODO
+==============================
+
+lib:
+- Ability to sort Issues by Multiple Keys: project, priority, status, etc.
+- Write back to server updated tickets?
+
+client:
+- Stay alive to store password and fetch again?
+- Keep a cache in a tmp file and only update from site periodically?
+- Come up with a draft CLI... `red [command]` perhaps?
