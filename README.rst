@@ -19,6 +19,7 @@ Very early stages now... mostly ideas like this::
 Mostly, the plan for this project consists of two parts:
 
 ``libredmine``
-  a python abstraction of an instance of Redmine with a www-mechanize backend 
+    a python abstraction of an instance of Redmine with a www-mechanize backend 
+
 ``rdm``
-  a command-line client for interfacing with Redmine that leverages the python library
+    a command-line client for interfacing with Redmine that leverages the python library
