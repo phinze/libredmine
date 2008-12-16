@@ -29,11 +29,15 @@ Mostly, the plan for this project consists of two parts:
 TODO
 ==============================
 
-lib:
+libredmine
+----------
+
 - Ability to sort Issues by Multiple Keys: project, priority, status, etc.
 - Write back to server updated tickets?
 
-client:
+rdm client
+----------
+
 - Stay alive to store password and fetch again?
 - Keep a cache in a tmp file and only update from site periodically?
-- Come up with a draft CLI... `red [command]` perhaps?
+- Come up with a draft CLI... ``rdm [command]`` perhaps?
