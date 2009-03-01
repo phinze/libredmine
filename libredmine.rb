@@ -171,4 +171,4 @@ my_issues.each do |issue|
   end
   puts "  " + issue.get_header()
 end
-puts "Total Iss
+puts "Total: " + my_issues.length.to_s
