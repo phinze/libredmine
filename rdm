@@ -1,0 +1,98 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'cmdparse'
+require 'libredmine'
+
+class RedmineConfig
+  def initialize
+    @store = YAML.load_file('config.yml')
+  end
+
+  def method_missing(key)
+    if @store.key?(key)
+      return @store[key]
+    end
+    return nil
+  end
+end
+
+class RedmineCommand < CmdParse::Command
+  def initialize(*args)
+    @config = RedmineConfig.new
+    @_redmine ||= Redmine::Site.new(@config.url) 
+    super(*args)
+  end
+
+  protected
+
+  def redmine
+    @_redmine.login(@config.user, @config.pass) unless @_redmine.logged_in
+    @_redmine
+  end
+
+  def list(issues)
+    # Sort by project
+    issues.sort! {|a, b| a.project <=> b.project }
+
+    # Print w/ project headers
+    last_proj = nil
+    issues.each do |issue|
+      if issue.project != last_proj:
+        last_proj = issue.project 
+        puts issue.project + ':'
+      end
+      puts "  " + issue.get_header()
+    end
+    puts "Total: " + issues.length.to_s
+  end
+end
+
+class ListCommand < RedmineCommand
+  def initialize
+    super('list', true)
+    self.short_desc = 'List basic information about issues'
+    self.add_command(ListMineCommand.new)
+  end
+end
+
+class ListMineCommand < RedmineCommand
+  def initialize
+    super('mine', false)
+    self.short_desc = 'List issues belonging to current user'
+  end
+
+  def execute(args)
+    issues = redmine.query(redmine.issues.assigned_to_user('me'))
+    list(issues)
+  end
+end
+
+class InfoCommand < RedmineCommand
+  def initialize
+    super('info', false)
+    self.short_desc = 'Print detailed information about a specific issue'
+  end
+
+  def execute(args)
+    issue_id = args[0].to_i
+    raise ArgumentError, "must specify an issue number" unless issue_id > 0
+    issue = redmine.get_issue(issue_id)
+  end
+end
+
+cmd = CmdParse::CommandParser.new(true)
+cmd.program_name = 'rdm'
+cmd.banner = 'rdm, the Redmine command line client'
+cmd.program_version = [0,0,1]
+cmd.add_command( CmdParse::HelpCommand.new )
+cmd.add_command( CmdParse::VersionCommand.new )
+cmd.add_command( ListCommand.new )
+cmd.add_command( InfoCommand.new )
+
+cmd.options = CmdParse::OptionParserWrapper.new do |opt|
+  opt.separator "Global options:"
+  opt.on("--verbose", "Be verbose when outputting info") {|t| $verbose = true }
+end
+
+cmd.parse

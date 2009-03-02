@@ -49,7 +49,7 @@ module Redmine
       return @id + ': ' + @subject + ' (' + @status + ')'
     end
 
-    def self.issues_from_csv(csv_list)
+    def self.from_csv(csv_list)
       issues = {}
       csv_list.each do |row|
         next if row[0] == "#"
@@ -58,6 +58,15 @@ module Redmine
         issues[red.id] = red
       end
       return issues
+    end
+
+    def self.from_mechanize_page(id, page)
+      issue = self.new(id)
+      form = page.form_with(:action => "/issues/#{id}/edit")
+      issue.status = form.['issue[status_id]'].options.find { |o| o.value == form['issue[status_id]'] }.text
+      issue.project
+      debugger
+      tmp = 1
     end
   end
 
@@ -82,14 +91,13 @@ module Redmine
       @url = @url + "status_id=#{status_id}&"
     end
 
-    def with_id(issue_id)
-      @url = URI::join(@url, issue_id)
-    end
-
   end
 
   # Represents an instance of a Redmine site
   class Site
+
+    attr_reader :logged_in
+
     def initialize(url)
       @url = url
       @agent = WWW::Mechanize.new { |a| a.log = Logger.new(File.join('mech.log')) }
@@ -125,6 +133,7 @@ module Redmine
       @agent.get(q) do |page|
         csv_page = page.link_with(:text => 'CSV').click
         FasterCSV.parse(csv_page.content) do |row|
+          next if row[0] == "#"
           issues << Issue.new(*row)
         end
       end
@@ -132,9 +141,10 @@ module Redmine
     end
 
     def get_issue(issue_number)
-      return if not @logged_in
-      @agent.open(urlparse.urljoin(@url, "issues/show/" + str(issue_number)))
-      return false
+      raise 'must be logged in' unless @logged_in
+      @agent.get(URI::join(@url, "/issues/show/#{issue_number.to_s}")) do |page|
+        return Issue.from_mechanize_page(page)
+      end
     end
 
     private 
@@ -152,23 +162,3 @@ module Redmine
     end
   end
 end
-
-# Init
-redmine = Redmine::Site.new('https://redmine.research.uiowa.edu/')
-redmine.login
-my_issues = redmine.query(redmine.issues.assigned_to_user('me'))
-
-
-# Sort by project
-my_issues.sort! {|a, b| a.project <=> b.project }
-
-# Print w/ project headers
-last_proj = nil
-my_issues.each do |issue|
-  if issue.project != last_proj:
-    last_proj = issue.project 
-    puts issue.project + ':'
-  end
-  puts "  " + issue.get_header()
-end
-puts "Total: " + my_issues.length.to_s
